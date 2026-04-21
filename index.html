@@ -284,6 +284,7 @@
 <script>
 const DROPBOX_TOKEN = 'Ycoj9KpNuTwAAAAAAAAAAS5p1XvysVREJZ7ix5fF65MEQDEkqfX54mmCnU-oB_t5';
 const DROPBOX_FOLDER = '/Requests for Sundae';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwG7NC3LkdBiJbGPI-V-EdqConS-fafQjIP845Dr9R0qg99qB6M4BQ95pDuG4x2dvkytA/exec';
 
 let uploadedFiles = [];
 
@@ -457,6 +458,21 @@ async function submitForm() {
     // Upload summary txt
     const summaryName = `${type}_${productOrMarket.replace(/\s+/g,'')}_${channels.join('-')}_${date.replace(/-/g,'')}_summary.txt`;
     await uploadToDropbox(`${DROPBOX_FOLDER}/${summaryName}`, buildSummary(type, productOrMarket, date, channels, comments));
+
+    // Log to Google Sheets
+    const filenames = uploadedFiles.map(({file}, i) => buildFileName(file, type, productOrMarket, channels, date)).join(', ');
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        requestType: type,
+        productOrMarket,
+        date,
+        channels: channels.join(', '),
+        comments,
+        filenames
+      })
+    });
+
     setProgress(100);
 
     statusEl.className = 'status success';
