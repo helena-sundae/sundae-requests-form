@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Requests for Sundae</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #fff5f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 40px;
+    width: 100%;
+    max-width: 580px;
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .logo h1 {
+    font-size: 26px;
+    color: #c2547a;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .logo p {
+    font-size: 13px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .field { margin-bottom: 22px; }
+  label.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+  }
+  .required::after { content: ' *'; color: #c2547a; }
+  input[type="text"],
+  input[type="date"],
+  textarea {
+    width: 100%;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.2s;
+    background: #fafafa;
+  }
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #c2547a;
+    background: #fff;
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  .radio-group, .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .radio-group label, .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    background: #fafafa;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .radio-group label:hover, .checkbox-group label:hover {
+    border-color: #c2547a;
+  }
+  .radio-group input, .checkbox-group input { accent-color: #c2547a; }
+  .conditional { display: none; margin-top: 12px; }
+  .conditional.visible { display: block; }
+  .other-input { margin-top: 10px; display: none; }
+  .other-input.visible { display: block; }
+
+  /* Upload area */
+  .upload-area {
+    border: 2px dashed #e0b0c0;
+    border-radius: 10px;
+    padding: 28px;
+    text-align: center;
+    background: #fff8fa;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-area:hover { border-color: #c2547a; background: #fff0f4; }
+  .upload-area input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-area p { font-size: 13px; color: #888; }
+  .upload-area span { color: #c2547a; font-weight: 600; }
+
+  /* Previews */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid #eee;
+    aspect-ratio: 1;
+    background: #f5f5f5;
+  }
+  .preview-item img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .preview-item .delete-btn {
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .preview-item .delete-btn:hover { background: #c2547a; }
+  .preview-item .file-name {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    font-size: 10px;
+    padding: 3px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Submit */
+  .submit-btn {
+    width: 100%;
+    background: #c2547a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s;
+  }
+  .submit-btn:hover { background: #a8405f; }
+  .submit-btn:disabled { background: #dba0b5; cursor: not-allowed; }
+
+  /* Status */
+  .status {
+    margin-top: 18px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+  }
+  .status.success { background: #edf7ed; color: #2e7d32; display: block; }
+  .status.error { background: #fdecea; color: #c62828; display: block; }
+  .status.loading { background: #e8f4fd; color: #1565c0; display: block; }
+
+  .progress-bar-wrap {
+    height: 6px;
+    background: #f0d0da;
+    border-radius: 3px;
+    margin-top: 8px;
+    display: none;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #c2547a;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+  .error-msg { color: #c2547a; font-size: 12px; margin-top: 5px; display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>Requests for Sundae</h1>
+    <p>All fields marked * are required</p>
+  </div>
+
+  <!-- Type of Request -->
+  <div class="field">
+    <label class="field-label required">Type of Request</label>
+    <div class="radio-group">
+      <label><input type="radio" name="requestType" value="Product" onchange="handleRequestType()"> Product</label>
+      <label><input type="radio" name="requestType" value="Market" onchange="handleRequestType()"> Market</label>
+    </div>
+    <div class="error-msg" id="err-requestType">Please select a request type.</div>
+  </div>
+
+  <!-- Which Product (conditional) -->
+  <div class="field conditional" id="field-product">
+    <label class="field-label required" for="whichProduct">Which product?</label>
+    <input type="text" id="whichProduct" placeholder="e.g. Very Vanilla Body Scrub" />
+    <div class="error-msg" id="err-whichProduct">Please enter the product name.</div>
+  </div>
+
+  <!-- Which Market (conditional) -->
+  <div class="field conditional" id="field-market">
+    <label class="field-label required" for="whichMarket">Which market?</label>
+    <input type="text" id="whichMarket" placeholder="e.g. Australia" />
+    <div class="error-msg" id="err-whichMarket">Please enter the market.</div>
+  </div>
+
+  <!-- Date of Request -->
+  <div class="field">
+    <label class="field-label required" for="requestDate">Date of Request</label>
+    <input type="date" id="requestDate" />
+    <div class="error-msg" id="err-requestDate">Please select a date.</div>
+  </div>
+
+  <!-- Request Channel -->
+  <div class="field">
+    <label class="field-label required">Request Channel</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="channel" value="Instagram"> Instagram</label>
+      <label><input type="checkbox" name="channel" value="TikTok"> TikTok</label>
+      <label><input type="checkbox" name="channel" value="Facebook"> Facebook</label>
+      <label><input type="checkbox" name="channel" value="Email"> Email</label>
+      <label><input type="checkbox" name="channel" value="Other" onchange="toggleOther(this)"> Other</label>
+    </div>
+    <div class="other-input" id="other-input">
+      <input type="text" id="otherChannel" placeholder="Please specify…" />
+      <div class="error-msg" id="err-otherChannel">Please specify the other channel.</div>
+    </div>
+    <div class="error-msg" id="err-channel">Please select at least one channel.</div>
+  </div>
+
+  <!-- Additional Comments -->
+  <div class="field">
+    <label class="field-label" for="comments">Additional Comments</label>
+    <textarea id="comments" placeholder="Any other details…"></textarea>
+  </div>
+
+  <!-- Image Upload -->
+  <div class="field">
+    <label class="field-label required">Upload Images</label>
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)" />
+      <div class="upload-icon">📁</div>
+      <p><span>Click to upload</span> or drag and drop</p>
+      <p>PNG, JPG, GIF, WEBP supported</p>
+    </div>
+    <div class="preview-grid" id="previewGrid"></div>
+    <div class="error-msg" id="err-images">Please upload at least one image.</div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">Submit Request</button>
+  <div class="progress-bar-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="status" id="statusMsg"></div>
+</div>
+
+<script>
+const DROPBOX_TOKEN = 'Ycoj9KpNuTwAAAAAAAAAAS5p1XvysVREJZ7ix5fF65MEQDEkqfX54mmCnU-oB_t5';
+const DROPBOX_FOLDER = '/Requests for Sundae';
+
+let uploadedFiles = [];
+
+function handleRequestType() {
+  const val = document.querySelector('input[name="requestType"]:checked')?.value;
+  document.getElementById('field-product').classList.toggle('visible', val === 'Product');
+  document.getElementById('field-market').classList.toggle('visible', val === 'Market');
+  clearError('requestType');
+}
+
+function toggleOther(cb) {
+  const wrap = document.getElementById('other-input');
+  wrap.classList.toggle('visible', cb.checked);
+  if (!cb.checked) {
+    document.getElementById('otherChannel').value = '';
+    clearError('otherChannel');
+  }
+  clearError('channel');
+}
+
+function handleFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const id = Date.now() + Math.random();
+    const reader = new FileReader();
+    reader.onload = e => addPreview(f, e.target.result, id);
+    reader.readAsDataURL(f);
+    uploadedFiles.push({ file: f, id });
+  }
+  clearError('images');
+  // reset input so same file can be re-added if deleted
+  document.getElementById('fileInput').value = '';
+}
+
+function addPreview(file, src, id) {
+  const grid = document.getElementById('previewGrid');
+  const item = document.createElement('div');
+  item.className = 'preview-item';
+  item.dataset.id = id;
+  item.innerHTML = `
+    <img src="${src}" alt="${file.name}" />
+    <button class="delete-btn" onclick="removeFile(${id})" title="Remove">✕</button>
+    <div class="file-name">${file.name}</div>
+  `;
+  grid.appendChild(item);
+}
+
+function removeFile(id) {
+  uploadedFiles = uploadedFiles.filter(f => f.id !== id);
+  const el = document.querySelector(`.preview-item[data-id="${id}"]`);
+  if (el) el.remove();
+}
+
+function showError(field, show = true) {
+  const el = document.getElementById('err-' + field);
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+function clearError(field) { showError(field, false); }
+
+function validate() {
+  let valid = true;
+  const type = document.querySelector('input[name="requestType"]:checked')?.value;
+  if (!type) { showError('requestType'); valid = false; } else clearError('requestType');
+
+  if (type === 'Product') {
+    const v = document.getElementById('whichProduct').value.trim();
+    if (!v) { showError('whichProduct'); valid = false; } else clearError('whichProduct');
+  }
+  if (type === 'Market') {
+    const v = document.getElementById('whichMarket').value.trim();
+    if (!v) { showError('whichMarket'); valid = false; } else clearError('whichMarket');
+  }
+
+  const date = document.getElementById('requestDate').value;
+  if (!date) { showError('requestDate'); valid = false; } else clearError('requestDate');
+
+  const channels = [...document.querySelectorAll('input[name="channel"]:checked')].map(c => c.value);
+  if (!channels.length) { showError('channel'); valid = false; } else clearError('channel');
+
+  if (channels.includes('Other')) {
+    const ov = document.getElementById('otherChannel').value.trim();
+    if (!ov) { showError('otherChannel'); valid = false; } else clearError('otherChannel');
+  }
+
+  if (!uploadedFiles.length) { showError('images'); valid = false; } else clearError('images');
+
+  return valid;
+}
+
+function buildFileName(file, type, productOrMarket, channels, date) {
+  const sanitize = s => s.replace(/[^a-zA-Z0-9_\-]/g, '').substring(0, 40);
+  const ext = file.name.split('.').pop();
+  const t = sanitize(type);
+  const pm = sanitize(productOrMarket);
+  const ch = sanitize(channels.join('-'));
+  const d = date.replace(/-/g, '');
+  return `${t}_${pm}_${ch}_${d}.${ext}`;
+}
+
+function buildSummary(type, productOrMarket, date, channels, comments) {
+  return [
+    'REQUESTS FOR SUNDAE — SUBMISSION SUMMARY',
+    '==========================================',
+    `Type of Request : ${type}`,
+    `Product / Market: ${productOrMarket}`,
+    `Date of Request : ${date}`,
+    `Request Channel : ${channels.join(', ')}`,
+    `Comments        : ${comments || '(none)'}`,
+    '',
+    `Submitted at    : ${new Date().toISOString()}`
+  ].join('\n');
+}
+
+async function uploadToDropbox(path, content, isBinary = false) {
+  const body = isBinary ? content : new Blob([content], { type: 'text/plain' });
+  const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${DROPBOX_TOKEN}`,
+      'Dropbox-API-Arg': JSON.stringify({ path, mode: 'overwrite', autorename: true }),
+      'Content-Type': 'application/octet-stream'
+    },
+    body
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  return res.json();
+}
+
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+async function submitForm() {
+  if (!validate()) return;
+
+  const btn = document.getElementById('submitBtn');
+  const statusEl = document.getElementById('statusMsg');
+  const progressWrap = document.getElementById('progressWrap');
+
+  const type = document.querySelector('input[name="requestType"]:checked').value;
+  const productOrMarket = type === 'Product'
+    ? document.getElementById('whichProduct').value.trim()
+    : document.getElementById('whichMarket').value.trim();
+  const date = document.getElementById('requestDate').value;
+  const rawChannels = [...document.querySelectorAll('input[name="channel"]:checked')].map(c => c.value);
+  const channels = rawChannels.map(c => c === 'Other' ? document.getElementById('otherChannel').value.trim() : c);
+  const comments = document.getElementById('comments').value.trim();
+
+  btn.disabled = true;
+  progressWrap.style.display = 'block';
+  setProgress(5);
+  statusEl.className = 'status loading';
+  statusEl.textContent = 'Uploading… please wait.';
+
+  try {
+    const total = uploadedFiles.length + 1; // +1 for summary
+    let done = 0;
+
+    // Upload each image
+    for (const { file } of uploadedFiles) {
+      const fileName = buildFileName(file, type, productOrMarket, channels, date);
+      const arrayBuffer = await file.arrayBuffer();
+      await uploadToDropbox(`${DROPBOX_FOLDER}/${fileName}`, arrayBuffer, true);
+      done++;
+      setProgress(Math.round((done / total) * 90));
+    }
+
+    // Upload summary txt
+    const summaryName = `${type}_${productOrMarket.replace(/\s+/g,'')}_${channels.join('-')}_${date.replace(/-/g,'')}_summary.txt`;
+    await uploadToDropbox(`${DROPBOX_FOLDER}/${summaryName}`, buildSummary(type, productOrMarket, date, channels, comments));
+    setProgress(100);
+
+    statusEl.className = 'status success';
+    statusEl.textContent = `✓ Successfully uploaded ${uploadedFiles.length} image${uploadedFiles.length > 1 ? 's' : ''} to Dropbox!`;
+
+    // Reset form
+    setTimeout(() => {
+      document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(i => i.checked = false);
+      ['whichProduct','whichMarket','requestDate','comments','otherChannel'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('field-product').classList.remove('visible');
+      document.getElementById('field-market').classList.remove('visible');
+      document.getElementById('other-input').classList.remove('visible');
+      document.getElementById('previewGrid').innerHTML = '';
+      uploadedFiles = [];
+      btn.disabled = false;
+      progressWrap.style.display = 'none';
+      setProgress(0);
+    }, 3000);
+
+  } catch (err) {
+    setProgress(0);
+    progressWrap.style.display = 'none';
+    statusEl.className = 'status error';
+    statusEl.textContent = `✕ Upload failed: ${err.message}`;
+    btn.disabled = false;
+  }
+}
+
+// drag and drop
+const ua = document.getElementById('uploadArea');
+ua.addEventListener('dragover', e => { e.preventDefault(); ua.style.borderColor = '#c2547a'; });
+ua.addEventListener('dragleave', () => { ua.style.borderColor = '#e0b0c0'; });
+ua.addEventListener('drop', e => {
+  e.preventDefault();
+  ua.style.borderColor = '#e0b0c0';
+  handleFiles(e.dataTransfer.files);
+});
+</script>
+</body>
+</html>
